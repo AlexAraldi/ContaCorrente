@@ -1,55 +1,81 @@
-﻿
-
-using System.Net.Http.Headers;
-using System.Reflection.Metadata;
+﻿using System.Reflection.Metadata;
 
 namespace ContaCorrente.ConsoleApp
 {
-    class ContaCorrente
+    public class ContaCorrente
     {
-        public int numeroConta;
-
         public decimal saldo;
-
-        public decimal movimentacao;
-
-        public decimal transferencia;
-
+        public decimal numero;
         public decimal limite;
-
-        public void Sacar(decimal valor)
-        {
-            saldo -= valor;
-            limite = saldo + 1000;
-        }
+        public Movimentacao[] movimentacoes;
 
         public void Depositar(decimal valor)
         {
             saldo += valor;
-            limite = saldo + 1000;
+            limite = saldo;
 
+            Movimentacao movimentacao = new Movimentacao();
+            movimentacao.debito = valor;
+            movimentacao.tipo = "Credito";
+            movimentacao.descricao = $"Crédito de R$  {valor:F2} R$";
+
+            int posicaoVazia = PegaPosicaoVazia();
+
+            movimentacoes[posicaoVazia] = movimentacao;
         }
-        public void Movimentacoes(decimal transferencia)
+
+        public void Sacar(decimal valor)
         {
-            if (saldo >= -500)
+            if (valor < saldo + limite)
             {
-                movimentacao = Sacar ;
-            }
-            if (saldo <= 1000)
-            {
-                movimentacao = Depositar;
-            }
-            
+                saldo -= valor;
+                limite = saldo;
 
+                Movimentacao movimentacao = new Movimentacao();
+                movimentacao.debito = valor;
+                movimentacao.tipo = "Débito";
+                movimentacao.descricao = $"Débito de R$ {valor:F2} R$";
+
+                int posicaoVazia = PegaPosicaoVazia();
+
+                movimentacoes[posicaoVazia] = movimentacao;
+            }
         }
 
-        public void extrato(decimal exibirExtrato)
+        public void TransferirPara(ContaCorrente contaDestinada, decimal valor)
         {
-            exibirExtrato = Convert.ToInt32(movimentacao);
-            Console.ReadLine();
-            Console.WriteLine("Extrato de movimentações");
+            this.Sacar(valor);
+
+            contaDestinada.Depositar(valor);
         }
 
+        public void ExibirExtrato()
+        {
+            Console.WriteLine("-------------------------------");
+            Console.WriteLine($"Extrado da Conta: #{numero}");
+            Console.WriteLine("-------------------------------");
+            Console.WriteLine("Movimentações:");
+            Console.WriteLine("-------------------------------");
+
+            foreach (Movimentacao movimentacao in movimentacoes)
+            {
+                if (movimentacao != null)
+                    Console.WriteLine(movimentacao.descricao);
+            }
+
+            Console.WriteLine("--------------------------------");
+            Console.WriteLine($"Saldo Atual: R$ {saldo:F2}");
+        }
+
+        public int PegaPosicaoVazia()
+        {
+            for (int i = 0; i < movimentacoes.Length; i++)
+            {
+                if (movimentacoes[i] == null)
+                    return i;
+            }
+            return -1;
+        }
 
     }
 }
